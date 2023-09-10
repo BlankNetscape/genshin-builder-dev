@@ -1,0 +1,29 @@
+{
+  "name": "datamine",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/datamine/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/datamine",
+        "main": "libs/datamine/src/index.ts",
+        "tsConfig": "libs/datamine/tsconfig.lib.json",
+        "assets": ["libs/datamine/*.md"]
+      }
+    },
+    "lint": {
+      "executor": "@nx/linter:eslint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": [
+          "libs/datamine/**/*.ts",
+          "libs/datamine/package.json"
+        ]
+      }
+    }
+  },
+  "tags": []
+}

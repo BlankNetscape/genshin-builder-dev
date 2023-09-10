@@ -3,18 +3,35 @@
   "compilerOptions": {
     "rootDir": ".",
     "sourceMap": true,
-    "declaration": false,
+    "declaration": true,
     "moduleResolution": "node",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
     "target": "es2015",
     "module": "esnext",
-    "lib": ["es2020", "dom"],
+    "lib": ["es2021", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "strict": true,
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+    "strictNullChecks": true,
+    "allowSyntheticDefaultImports": false,
+    "paths": {
+      "@genshin-builder/assets": ["libs/assets/src/index.ts"],
+      "@genshin-builder/consts": ["libs/consts/src/index.ts"],
+      "@genshin-builder/datamine": ["libs/datamine/src/index.ts"],
+      "@genshin-builder/stats": ["libs/stats/src/index.ts"],
+      "@genshin-builder/utils": ["libs/utils/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
