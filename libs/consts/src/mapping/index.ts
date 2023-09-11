@@ -1,12 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { SubstatKey as ConstSubstatKey } from '..'
+
 export * from './character'
 export * from './weapon'
 export * from './artifact'
-
-import {
-  SubstatKey as ConstSubstatKey,
-  MainStatKey as ConstMainstatKey,
-} from '@genshin-builder/consts'
 
 export const tagColor = {
   FFD780FF: 'strong',
@@ -27,8 +24,8 @@ export const weaponMap = {
   WEAPON_BOW: 'bow',
   WEAPON_POLE: 'polearm',
 } as const
-export type DWeaponTypeKey = keyof typeof weaponMap
-export type WeaponTypeKey = (typeof weaponMap)[keyof typeof weaponMap]
+export type ExcelPropWeaponTypeKey = keyof typeof weaponMap
+export type ExcelWeaponTypeKey = (typeof weaponMap)[keyof typeof weaponMap]
 
 export const SubStatPropTypeMap: Record<string, ConstSubstatKey> = {
   FIGHT_PROP_HP: 'hp',
@@ -42,8 +39,8 @@ export const SubStatPropTypeMap: Record<string, ConstSubstatKey> = {
   FIGHT_PROP_ELEMENT_MASTERY: 'eleMas',
   FIGHT_PROP_CHARGE_EFFICIENCY: 'enerRech_',
 } as const
-export type DSubstatKey = keyof typeof SubStatPropTypeMap
-export type SubstatKey =
+export type ExcelPropSubstatKey = keyof typeof SubStatPropTypeMap
+export type ExcelSubstatKey =
   (typeof SubStatPropTypeMap)[keyof typeof SubStatPropTypeMap]
 
 const { FIGHT_PROP_DEFENSE, ...mainPart } = SubStatPropTypeMap //subtract flat def
@@ -60,7 +57,7 @@ export const MainPropMap = {
   FIGHT_PROP_GRASS_ADD_HURT: 'dendro_dmg_',
   // FIGHT_PROP_FIRE_SUB_HURT:"" //
 } as const
-export type MainStatKey = (typeof MainPropMap)[keyof typeof MainPropMap]
+export type ExcelMainStatKey = (typeof MainPropMap)[keyof typeof MainPropMap]
 
 export const propTypeMap = {
   ...SubStatPropTypeMap,
@@ -71,8 +68,8 @@ export const propTypeMap = {
   FIGHT_PROP_BASE_DEFENSE: 'def',
   FIGHT_PROP_SHIELD_COST_MINUS_RATIO: 'shield_',
 } as const
-export type PropTypeKey = keyof typeof propTypeMap
-export type StatKey = (typeof propTypeMap)[keyof typeof propTypeMap]
+export type ExcelPropTypeKey = keyof typeof propTypeMap
+export type ExcelStatKey = (typeof propTypeMap)[keyof typeof propTypeMap]
 
 export const QualityTypeMap = {
   QUALITY_ORANGE: 5,
@@ -80,4 +77,4 @@ export const QualityTypeMap = {
   QUALITY_BLUE: 3,
   QUALITY_GREEN: 2,
 } as const
-export type DQualityKey = keyof typeof QualityTypeMap
+export type ExcelQualityKey = keyof typeof QualityTypeMap

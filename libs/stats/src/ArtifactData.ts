@@ -1,8 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ArtifactSlotKey, RarityKey } from '@genshin-builder/consts'
+import {
+  ArtifactSetKey,
+  ArtifactSlotKey,
+  RarityKey,
+} from '@genshin-builder/consts'
 
 export type ArtifactData = {
-  data: Record<string, Data>
+  data: Record<ArtifactSetKey, Data>
   subRoll: Record<string, Record<string, Record<string, any[]>>>
   subRollCorrection: Record<string, Record<string, Record<string, string>>>
   main: Record<string, Record<string, number[]>>
