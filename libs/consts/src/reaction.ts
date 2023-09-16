@@ -18,4 +18,4 @@ export type ReactionKey =
   | AmplifyingReactionKey
   | CatalyzeReactionKey
 
-// TODO - Reaction type check
+// [] TODO: Reaction type check

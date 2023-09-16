@@ -33,5 +33,7 @@ export const substatKeys = [
 ] as const
 
 export type MainStatKey = (typeof mainStatKeys)[number]
-export type SubstatKey = (typeof substatKeys)[number]
-export type StatKey = MainStatKey | SubstatKey
+export type SubStatKey = (typeof substatKeys)[number]
+export type StatKey = MainStatKey | SubStatKey
+
+// TODO: Re check stats

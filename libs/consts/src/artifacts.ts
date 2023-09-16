@@ -61,6 +61,8 @@ export const artifactSlotKeys = [
 ] as const
 export type ArtifactSlotKey = (typeof artifactSlotKeys)[number]
 
+export type ArtifactRarityKey = 1 | 2 | 3 | 4 | 5
+
 export const artMaxLevel: Record<RarityKey, number> = {
   1: 4,
   2: 4,
