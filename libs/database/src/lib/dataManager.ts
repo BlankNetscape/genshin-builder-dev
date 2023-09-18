@@ -5,7 +5,13 @@ import { Database } from './database'
 
 type Callback<Arg> = (key: Arg, reason: TriggerString, object: any) => void
 
-export class DataManagerBase<CacheKey extends string, DataKey extends string, CacheValue extends StorageValue, StorageValue, DatabaseType extends Database> {
+export class DataManagerBase<
+  CacheKey extends string, 
+  DataKey extends string, 
+  CacheValue extends StorageValue, 
+  StorageValue, 
+  DatabaseType extends Database
+> {
   database: DatabaseType
   dataKey: DataKey
   data: Partial<Record<CacheKey, CacheValue>> = {}

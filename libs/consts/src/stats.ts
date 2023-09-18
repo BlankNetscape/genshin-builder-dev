@@ -36,4 +36,4 @@ export type MainStatKey = (typeof mainStatKeys)[number]
 export type SubStatKey = (typeof substatKeys)[number]
 export type StatKey = MainStatKey | SubStatKey
 
-// TODO: Re check stats
+// [ ] TODO: Re check stats

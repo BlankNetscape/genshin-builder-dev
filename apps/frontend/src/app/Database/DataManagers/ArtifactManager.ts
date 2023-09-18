@@ -1,0 +1,393 @@
+import { ArtifactSetKey, CharacterKey, SubStatKey, charKeyToLocationCharKey } from '@genshin-builder/consts'
+import { IArtifact, ICachedArtifact, ICachedSubStat } from '@genshin-builder/datamodel'
+import { GenshinBuilderDatabase, IGOOD, ImportResult } from '../Database'
+import { DataManager } from './GenshinBuilderDataManager'
+
+// [ ] TODO: FIX ERRORS
+
+export class ArtifactDataManager extends DataManager<string, 'artifacts', ICachedArtifact, IArtifact, GenshinBuilderDatabase> {
+  constructor(database: GenshinBuilderDatabase) {
+    super(database, 'artifacts')
+    for (const key of this.database.storage.keys) if (key.startsWith('artifact_') && !this.set(key, {})) this.database.storage.remove(key)
+  }
+
+  new(value: IArtifact): string {
+    const id = this.generateKey()
+    this.set(id, value)
+    return id
+  }
+
+  findDups(editorArt: IArtifact, idList = this.keys): { duplicated: ICachedArtifact[]; upgraded: ICachedArtifact[] } {
+    const { setKey, rarity, level, slotKey, mainStat, subStats } = editorArt
+
+    const arts = idList.map((id) => this.getCacheValue(id)).filter((a) => a) as ICachedArtifact[]
+    const candidates = arts.filter(
+      (candidate) =>
+        setKey === candidate.setKey &&
+        rarity === candidate.rarity &&
+        slotKey === candidate.slotKey &&
+        mainStat === candidate.mainStat &&
+        level >= candidate.level &&
+        subStats.every(
+          (substat, i) =>
+            !candidate.subStats[i].key || // Candidate doesn't have anything on this slot
+            (substat.key === candidate.subStats[i].key && // Or editor simply has better substat
+              substat.value >= candidate.subStats[i].value)
+        )
+    )
+
+    // Strictly upgraded artifact
+    const upgraded = candidates
+      .filter(
+        (candidate) =>
+          level > candidate.level &&
+          (Math.floor(level / 4) === Math.floor(candidate.level / 4) // Check for extra rolls
+            ? subStats.every(
+                (
+                  substat,
+                  i // Has no extra roll
+                ) => substat.key === candidate.subStats[i].key && substat.value === candidate.subStats[i].value
+              )
+            : subStats.some(
+                (
+                  substat,
+                  i // Has extra rolls
+                ) =>
+                  candidate.subStats[i].key
+                    ? substat.value > candidate.subStats[i].value // Extra roll to existing substat
+                    : substat.key // Extra roll to new substat
+              ))
+      )
+      .sort((candidates) => (candidates.location === editorArt.location ? -1 : 1))
+    // Strictly duplicated artifact
+    const duplicated = candidates
+      .filter(
+        (candidate) =>
+          level === candidate.level &&
+          subStats.every(
+            (substat) =>
+              !substat.key || // Empty slot
+              candidate.subStats.some(
+                (candidateSubstat) =>
+                  substat.key === candidateSubstat.key && // Or same slot
+                  substat.value === candidateSubstat.value
+              )
+          )
+      )
+      .sort((candidates) => (candidates.location === editorArt.location ? -1 : 1))
+    return { duplicated, upgraded }
+  }
+
+  setProbability(id: string, probability?: number) {
+    const art = this.getCacheValue(id)
+    if (art) this.setCachedEntry(id, { ...art, probability } as ICachedArtifact)
+  }
+
+  override validate(obj: unknown): IArtifact | undefined {
+    return validateArtifact(obj)
+  }
+
+  override toCache(storageObj: IArtifact, id: string): ICachedArtifact | undefined {
+    // Generate cache fields
+    const newArt = cachedArtifact(storageObj, id).artifact
+
+    // Check relations and update equipment
+    const oldArt = super.getCacheValue(id)
+    if (newArt.location !== oldArt?.location) {
+      const slotKey = newArt.slotKey
+      const prevChar = oldArt?.location ? this.database.characters.getWithInitWeapon(this.database.characters.LocationToCharacterKey(oldArt.location)) : undefined
+      const newChar = newArt.location ? this.database.characters.getWithInitWeapon(this.database.characters.LocationToCharacterKey(newArt.location)) : undefined
+
+      // previously equipped art at new location
+      const prevArt = super.getCacheValue(newChar?.equippedArtifacts[slotKey])
+
+      //current prevArt <-> newChar  && newArt <-> prevChar
+      //swap to prevArt <-> prevChar && newArt <-> newChar(outside of this if)
+
+      if (prevArt)
+        super.setCachedEntry(prevArt.id, {
+          ...prevArt,
+          location: prevChar?.key ? charKeyToLocationCharKey(prevChar.key) : '',
+        })
+      if (newChar) this.database.characters.setEquippedArtifact(charKeyToLocationCharKey(newChar.key), slotKey, newArt.id)
+      if (prevChar) this.database.characters.setEquippedArtifact(charKeyToLocationCharKey(prevChar.key), slotKey, prevArt?.id ?? '')
+    } else newArt.location && this.database.characters.triggerCharacter(newArt.location, 'update')
+    return newArt
+  }
+
+  override deCache(artifact: ICachedArtifact): IArtifact {
+    const {
+      setKey,
+      rarity,
+      level,
+      slotKey,
+      mainStat,
+      subStats,
+      location,
+      lock,
+    } = artifact
+    return {
+      setKey,
+      rarity,
+      level,
+      slotKey,
+      mainStat,
+      subStats: subStats.map((substat) => ({
+        key: substat.key,
+        value: substat.value,
+      })),
+      location,
+      lock,
+    }
+  }
+
+  override remove(key: string, notify = true) {
+    const art = this.getCacheValue(key)
+    if (!art) return
+    art.location &&
+      this.database.characters.setEquippedArtifact(art.location, art.slotKey, '')
+    super.remove(key, notify)
+  }
+
+  override importGOOD(good: IGOOD, resultContainer: ImportResult) {
+    resultContainer.artifacts.beforeMerge = this.values.length
+
+    // Match artifacts for counter, metadata, and locations
+    const artifacts = good.artifacts
+
+    if (!Array.isArray(artifacts) || !artifacts.length) {
+      resultContainer.artifacts.notInImport = this.values.length
+      return
+    }
+
+    const takenIds = new Set(this.keys)
+    artifacts.forEach((a) => {
+      const id = (a as ICachedArtifact).id
+      if (!id) return
+      takenIds.add(id)
+    })
+
+    resultContainer.artifacts.import = artifacts.length
+    const idsToRemove = new Set(this.values.map((a) => a.id))
+    const hasEquipment = artifacts.some((a) => a.location)
+    artifacts.forEach((a): void => {
+      const art = this.validate(a)
+      if (!art) {
+        resultContainer.artifacts.invalid.push(a)
+        return
+      }
+
+      let importArt = art
+      let importId: string | undefined = (a as ICachedArtifact).id
+      let foundDupOrUpgrade = false
+      if (!resultContainer.ignoreDups) {
+        const { duplicated, upgraded } = this.findDups(
+          art,
+          Array.from(idsToRemove)
+        )
+        if (duplicated[0] || upgraded[0]) {
+          foundDupOrUpgrade = true
+          // Favor upgrades with the same location, else use 1st dupe
+          let [match, isUpgrade] =
+            hasEquipment &&
+            art.location &&
+            upgraded[0]?.location === art.location
+              ? [upgraded[0], true]
+              : duplicated[0]
+              ? [duplicated[0], false]
+              : [upgraded[0], true]
+          if (importId) {
+            // favor exact id matches
+            const up = upgraded.find((a) => a.id === importId)
+            if (up) [match, isUpgrade] = [up, true]
+            const dup = duplicated.find((a) => a.id === importId)
+            if (dup) [match, isUpgrade] = [dup, false]
+          }
+          isUpgrade
+            ? resultContainer.artifacts.upgraded.push(art)
+            : resultContainer.artifacts.unchanged.push(art)
+          idsToRemove.delete(match.id)
+
+          //Imported artifact will be set to `importId` later, so remove the dup/upgrade now to avoid a duplicate
+          this.remove(match.id, false) // Do not notify, since this is a "replacement"
+          if (!importId) importId = match.id // always resolve some id
+          importArt = {
+            ...art,
+            location: hasEquipment ? art.location : match.location,
+          }
+        }
+      }
+      if (importId) {
+        if (this.getCacheValue(importId)) {
+          // `importid` already in use, get a new id
+          const newId = this.generateKey(takenIds)
+          takenIds.add(newId)
+          if (this.changeId(importId, newId)) {
+            // Sync the id in `idsToRemove` due to the `changeId`
+            if (idsToRemove.has(importId)) {
+              idsToRemove.delete(importId)
+              idsToRemove.add(newId)
+            }
+          }
+        }
+      } else {
+        importId = this.generateKey(takenIds)
+        takenIds.add(importId)
+      }
+      this.set(importId, importArt, !foundDupOrUpgrade)
+    })
+    const idtoRemoveArr = Array.from(idsToRemove)
+    if (resultContainer.keepNotInImport || resultContainer.ignoreDups)
+    resultContainer.artifacts.notInImport = idtoRemoveArr.length
+    else idtoRemoveArr.forEach((k) => this.remove(k))
+
+    this.database.weapons.ensureEquipments()
+  }
+}
+
+function validateArtifact(obj: unknown = {}, allowZeroSub = false): IArtifact | undefined {
+  // [ ] TODO validateArtifact
+  return
+}
+
+export function cachedArtifact(
+  flex: IArtifact,
+  id: string
+): { artifact: ICachedArtifact; errors: string[] } {
+  const { location, lock, setKey, slotKey, rarity, mainStat } = flex
+  const level = Math.round(
+    Math.min(Math.max(0, flex.level), rarity >= 3 ? rarity * 4 : 4)
+  )
+  const mainStatVal = getMainStatDisplayValue(mainStat, rarity, level)
+
+  const errors: string[] = []
+  const subStats: ICachedSubStat[] = flex.subStats.map((substat) => ({
+    ...substat,
+    rolls: [],
+    efficiency: 0,
+    accurateValue: substat.value,
+  }))
+  // Carry over the probability, since its a cached value calculated outside of the artifact.
+  const validated: ICachedArtifact = {
+    id,
+    setKey,
+    location,
+    slotKey,
+    lock,
+    mainStat,
+    rarity,
+    level,
+    subStats,
+    probability: (flex as any).probability,
+  }
+
+  const allPossibleRolls: { index: number; substatRolls: number[][] }[] = []
+  let totalUnambiguousRolls = 0
+
+  function efficiency(value: number, key: SubStatKey): number {
+    return (value / getSubstatValue(key)) * 100
+  }
+
+  subStats.forEach((substat, index): void => {
+    const { key, value } = substat
+    if (!key) {
+      substat.value = 0
+      return
+    }
+    substat.efficiency = efficiency(value, key)
+
+    const possibleRolls = getSubstatRolls(key, value, rarity)
+
+    if (possibleRolls.length) {
+      // Valid Substat
+      const possibleLengths = new Set(possibleRolls.map((roll) => roll.length))
+
+      if (possibleLengths.size !== 1) {
+        // Ambiguous Rolls
+        allPossibleRolls.push({ index, substatRolls: possibleRolls })
+      } else {
+        // Unambiguous Rolls
+        totalUnambiguousRolls += possibleRolls[0].length
+      }
+
+      substat.rolls = possibleRolls.reduce((best, current) =>
+        best.length < current.length ? best : current
+      )
+      substat.efficiency = efficiency(
+        substat.rolls.reduce((a, b) => a + b, 0),
+        key
+      )
+      substat.accurateValue = substat.rolls.reduce((a, b) => a + b, 0)
+    } else {
+      // Invalid Substat
+      substat.rolls = []
+      errors.push(`Invalid substat ${substat.key}`)
+    }
+  })
+
+  if (errors.length) return { artifact: validated, errors }
+
+  const { low, high } = artSubstatRollData[rarity],
+    lowerBound = low + Math.floor(level / 4),
+    upperBound = high + Math.floor(level / 4)
+
+  let highestScore = -Infinity // -Max(substats.rolls[i].length) over ambiguous rolls
+  const tryAllSubstats = (
+    rolls: { index: number; roll: number[] }[],
+    currentScore: number,
+    total: number
+  ) => {
+    if (rolls.length === allPossibleRolls.length) {
+      if (
+        total <= upperBound &&
+        total >= lowerBound &&
+        highestScore < currentScore
+      ) {
+        highestScore = currentScore
+        for (const { index, roll } of rolls) {
+          const key = subStats[index].key as SubStatKey
+          const accurateValue = roll.reduce((a, b) => a + b, 0)
+          subStats[index].rolls = roll
+          subStats[index].accurateValue = accurateValue
+          subStats[index].efficiency = efficiency(accurateValue, key)
+        }
+      }
+
+      return
+    }
+
+    const { index, substatRolls } = allPossibleRolls[rolls.length]
+    for (const roll of substatRolls) {
+      rolls.push({ index, roll })
+      const newScore = Math.min(currentScore, -roll.length)
+      if (newScore >= highestScore)
+        // Scores won't get better, so we can skip.
+        tryAllSubstats(rolls, newScore, total + roll.length)
+      rolls.pop()
+    }
+  }
+
+  tryAllSubstats([], Infinity, totalUnambiguousRolls)
+
+  const totalRolls = subStats.reduce(
+    (accu, { rolls }) => accu + rolls.length,
+    0
+  )
+
+  if (totalRolls > upperBound)
+    errors.push(
+      `${rarity}-star artifact (level ${level}) should have no more than ${upperBound} rolls. It currently has ${totalRolls} rolls.`
+    )
+  else if (totalRolls < lowerBound)
+    errors.push(
+      `${rarity}-star artifact (level ${level}) should have at least ${lowerBound} rolls. It currently has ${totalRolls} rolls.`
+    )
+
+  if (subStats.some((substat) => !substat.key)) {
+    const substat = subStats.find((substat) => (substat.rolls?.length ?? 0) > 1)
+    if (substat)
+      errors.push(`Substat ${substat.key} has > 1 roll, but not all substats are unlocked.`)
+  }
+
+  return { artifact: validated, errors }
+}

@@ -1,1 +1,3 @@
-export * from './lib/datamodel'
+export * from './artifact'
+export * from './character'
+export * from './weapon'

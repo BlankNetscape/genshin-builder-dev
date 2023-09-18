@@ -22,4 +22,4 @@ export interface ICachedCharacter extends ICharacter {
   equippedWeapon: string
 }
 
-// TODO: Calculatable Character
+// [ ] TODO: Calculatable Character

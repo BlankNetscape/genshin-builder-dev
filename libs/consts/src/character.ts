@@ -87,6 +87,7 @@ export type TravelerKey = (typeof travelerKeys)[number]
 export type CharacterKey = NTCharacterKey | TravelerKey
 export type GenderedCharacterKey = NTCharacterKey | 'TravelerM' | 'travelerF'
 export type LocationCharacterKey = NTCharacterKey | 'Traveler'
+export const locationCharacterKeys = [...ntCharacterKeys, 'Traveler']
 
 export type GenderKey = 'F' | 'M'
 
