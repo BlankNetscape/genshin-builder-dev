@@ -11,3 +11,5 @@ export function objKeyMap<K extends string | number, V>(
 ): Record<K, V> {
   return Object.fromEntries(keys.map((k, i) => [k, map(k, i)])) as Record<K, V>
 }
+
+export type Unit = '' | '%' | 's'

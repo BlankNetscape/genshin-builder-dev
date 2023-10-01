@@ -18,6 +18,7 @@ export class DataManagerBase<
   listeners: Partial<Record<CacheKey, Callback<CacheKey>[]>> = {}
   anyListeners: Callback<CacheKey>[] = []
 
+  /** Initialize Data Manager with data manager type and links database. */
   constructor(database: DatabaseType, dataKey: DataKey) {
     this.database = database
     this.dataKey = dataKey
@@ -41,7 +42,7 @@ export class DataManagerBase<
     return this.database.storage.get(this.toStorageKey(key))
   }
 
-  /** (actually prepares the entry) Push new entry to DataManager storage @param key  @param x value or function @param notify default -> true*/
+  /** (actually prepares the entry) Push new entry to DataManager storage, Database storage @param key  @param x value or function @param notify default -> true*/
   set(
       key: CacheKey, 
       x: Partial<StorageValue> | ((v: StorageValue) => Partial<StorageValue> | void), // value or function

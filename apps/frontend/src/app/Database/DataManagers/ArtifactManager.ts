@@ -1,7 +1,7 @@
 import { ArtifactSetKey, CharacterKey, SubStatKey, charKeyToLocationCharKey } from '@genshin-builder/consts'
 import { IArtifact, ICachedArtifact, ICachedSubStat } from '@genshin-builder/datamodel'
 import { GenshinBuilderDatabase, IGOOD, ImportResult } from '../Database'
-import { DataManager } from './GenshinBuilderDataManager'
+import { DataManager } from '../DataManager'
 
 // [ ] TODO: FIX ERRORS
 
@@ -59,6 +59,7 @@ export class ArtifactDataManager extends DataManager<string, 'artifacts', ICache
               ))
       )
       .sort((candidates) => (candidates.location === editorArt.location ? -1 : 1))
+      
     // Strictly duplicated artifact
     const duplicated = candidates
       .filter(
@@ -245,6 +246,8 @@ export class ArtifactDataManager extends DataManager<string, 'artifacts', ICache
   }
 }
 
+// Utils
+
 function validateArtifact(obj: unknown = {}, allowZeroSub = false): IArtifact | undefined {
   // [ ] TODO validateArtifact
   return
@@ -255,9 +258,11 @@ export function cachedArtifact(
   id: string
 ): { artifact: ICachedArtifact; errors: string[] } {
   const { location, lock, setKey, slotKey, rarity, mainStat } = flex
+
   const level = Math.round(
     Math.min(Math.max(0, flex.level), rarity >= 3 ? rarity * 4 : 4)
   )
+  
   const mainStatVal = getMainStatDisplayValue(mainStat, rarity, level)
 
   const errors: string[] = []

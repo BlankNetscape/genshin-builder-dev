@@ -3,7 +3,7 @@ import { ICachedCharacter, ICachedWeapon, IWeapon } from '@genshin-builder/datam
 import { GenshinBuilderDatabase, IGOOD, ImportResult } from '../Database'
 import { CharacterKey, LocationCharacterKey, charKeyToLocationCharKey, locationCharacterKeys, weaponKeys, weaponMaxLevel } from '@genshin-builder/consts'
 import { allStat } from '@genshin-builder/stats'
-import { DataManager } from './GenshinBuilderDataManager'
+import { DataManager } from '../DataManager'
 import { defaultInitialWeapon } from '../../Util/WeaponUtil'
 import { initCharacter } from '../../Util/CharacterUtil'
 import { validateLevelAsc } from '../../Util/LevelUtils'
