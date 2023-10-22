@@ -1,4 +1,4 @@
-import type { NTCharacterKey } from '@genshin-builder/consts'
+import { NTCharacterKey } from '../character';
 
 export type InternalElement =
   | 'Fire'
@@ -8,6 +8,7 @@ export type InternalElement =
   | 'Ice'
   | 'Water'
   | 'Rock'
+
 type ElementKey =
   | 'pyro'
   | 'dendro'
@@ -16,6 +17,7 @@ type ElementKey =
   | 'cryo'
   | 'hydro'
   | 'geo'
+  
 export const elementMap: Record<InternalElement, ElementKey> = {
   Fire: 'pyro',
   Grass: 'dendro',

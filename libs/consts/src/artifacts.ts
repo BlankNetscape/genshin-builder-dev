@@ -71,7 +71,7 @@ export const artMaxLevel: Record<RarityKey, number> = {
   5: 20,
 } as const
 
-export const artSubstatRollData: Record<
+export const artSubStatRollData: Record<
   RarityKey,
   { low: number; high: number; numUpgrades: number }
 > = {
@@ -135,3 +135,14 @@ export const artSlotsData = {
 // GO currently only support 3-5 star artifacts
 // export const goArtifactRarityKeys = [5, 4, 3] as const
 // export type ArtifactRarity = (typeof goArtifactRarityKeys)[number]
+
+export const rollColorKeys = [
+  'roll1',
+  'roll2',
+  'roll3',
+  'roll4',
+  'roll5',
+  'roll6',
+] as const
+
+export type RollColorKey = (typeof rollColorKeys)[number]

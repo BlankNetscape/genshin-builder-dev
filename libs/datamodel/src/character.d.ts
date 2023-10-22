@@ -2,6 +2,7 @@ import {
   ArtifactSlotKey,
   AscensionKey,
   CharacterKey,
+  ElementKey,
 } from '@genshin-builder/consts'
 
 export interface ICharacter {
@@ -14,6 +15,7 @@ export interface ICharacter {
     skill: number
     burst: number
   }
+  infusionAura: ElementKey
 }
 
 export interface ICachedCharacter extends ICharacter {

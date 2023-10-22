@@ -1,0 +1,100 @@
+/* eslint-disable no-constant-condition */
+/* eslint-disable prefer-const */
+import { CharacterKey, locationCharacterKeys } from '@genshin-builder/consts'
+import { DataManager } from '../DataManager'
+import { ICachedCharacter, ICharacter } from '@genshin-builder/datamodel'
+import { GenshinBuilderDatabase, IGOOD, IGenshinBuilder, ImportResult } from '../Database'
+import { validateLevelAsc } from '../../Util/LevelUtils'
+import { database_name } from '@genshin-builder/database'
+
+export class CharacterDataManager extends DataManager<
+  CharacterKey,
+  'characters',
+  ICachedCharacter,
+  ICharacter,
+  GenshinBuilderDatabase
+> {
+  constructor(database: GenshinBuilderDatabase) {
+    super(database, 'characters')
+
+    //
+    for (const key of this.database.storage.keys) {
+      if (
+        key.startsWith('char_') &&
+        !this.set(key.split('char_')[1] as CharacterKey, {})
+      )
+        this.database.storage.remove(key)
+    }
+  }
+
+  override validate(obj: unknown): ICharacter | undefined {
+      // Input guard-check
+      if (!obj || typeof obj !== 'object') return undefined
+
+      const {
+        key: characterKey,
+        level: rawLevel,
+        ascension: rawAscension,
+      } = obj as ICharacter
+      let {
+        infusionAura,
+        constellation,
+        talent,
+      } = obj as ICharacter
+
+      // Character Key check
+      if (!locationCharacterKeys.includes(characterKey)) return undefined
+
+      // TODO: Hitmode check
+      // TODO: Reaction check
+      // TODO: Rlement check
+      // TODO: Constellation check
+      
+      // Lvl & Asc check
+      const { level, ascension } = validateLevelAsc(rawLevel, rawAscension)
+
+      // TODO: Talent check
+      // Other checks...
+
+      const char: ICharacter = {
+        key: characterKey,
+        level,
+        constellation,
+        ascension,
+        talent,
+        infusionAura,
+      }
+      return char
+  }
+
+  override importGOOD(data: IGOOD & IGenshinBuilder, resultContainer: ImportResult): void {
+      resultContainer.characters.beforeMerge = this.values.length
+
+      const source = data.source ?? 'Unknown'
+      const characters = data[this.dataKey]
+
+      if (Array.isArray(characters) && characters?.length) {
+        resultContainer.characters.import = characters.length
+
+        const idsToRemove = new Set(this.keys)
+        characters.forEach(c => {
+          if (!c.key) resultContainer.characters.invalid.push(c as ICharacter)
+          idsToRemove.delete(c.key)
+          // TODO: Check for dups
+          // if (this.hasDup({ ...initialCharacter(c.key), ...c}))
+          if (false) {
+            throw('Unreachable')
+            resultContainer.characters.unchanged.push(c as ICharacter)
+          } else {
+            this.set(c.key, c)
+          }
+        })
+
+        const idToremoveArr = Array.from(idsToRemove)
+        if (resultContainer.keepNotInImport || resultContainer.ignoreDups)
+          resultContainer.characters.notInImport = idToremoveArr.length
+        else idToremoveArr.forEach((k) => this.remove(k))
+        resultContainer.characters.unchanged = []
+      } else resultContainer.characters.notInImport = this.values.length
+  }
+}

@@ -3,6 +3,7 @@ export type TriggerString = 'update' | 'remove' | 'new' | 'invalid'
 
 export const database_index_key = 'dbIndex'
 export const database_version_key = 'db_ver'
+export const database_name = 'gb_source'
 
 export function deepFreeze<T>(obj: T, layers = 5): T {
   if (layers === 0) return obj

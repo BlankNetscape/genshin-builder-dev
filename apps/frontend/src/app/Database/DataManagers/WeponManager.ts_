@@ -2,7 +2,7 @@
 import { ICachedCharacter, ICachedWeapon, IWeapon } from '@genshin-builder/datamodel'
 import { GenshinBuilderDatabase, IGOOD, ImportResult } from '../Database'
 import { CharacterKey, LocationCharacterKey, charKeyToLocationCharKey, locationCharacterKeys, weaponKeys, weaponMaxLevel } from '@genshin-builder/consts'
-import { allStat } from '@genshin-builder/stats'
+import { allStats } from '@genshin-builder/stats'
 import { DataManager } from '../DataManager'
 import { defaultInitialWeapon } from '../../Util/WeaponUtil'
 import { initCharacter } from '../../Util/CharacterUtil'
@@ -30,10 +30,10 @@ export class WeaponsDataManager extends DataManager<string, 'weapons', ICachedWe
   }
 
   ensureEquipment(charKey: CharacterKey, weaponIds: Set<string> = new Set(this.keys)) {
-    const char = this.database.characters.get(charKey)
+    const char = this.database.characters.getCacheValue(charKey)
     if (char?.equippedWeapon) return undefined
     const locKey = charKeyToLocationCharKey(charKey)
-    const weapon = defaultInitialWeapon(allStat.char.data[locKey].weaponType)
+    const weapon = defaultInitialWeapon(allStats.char.data[locKey].weaponType)
     const weaponId = this.generateKey(weaponIds)
     weaponIds.add(weaponId)
     this.set(weaponId, { ...weapon, location: locKey })
@@ -90,12 +90,12 @@ export class WeaponsDataManager extends DataManager<string, 'weapons', ICachedWe
     let { refinement, location, lock } = obj as IWeapon
 
     if (!weaponKeys.includes(key)) return undefined
-    const { rarity, weaponType } = allStat.weapon.data[key]
+    const { rarity, weaponType } = allStats.weapon.data[key]
     if (rawLevel > weaponMaxLevel[rarity]) return undefined
     const { level, ascension } = validateLevelAsc(rawLevel, rawAscension)
     if (typeof refinement !== 'number' || refinement < 1 || refinement > 5) refinement = 1
     if (location && !locationCharacterKeys.includes(location)) location = ''
-    if (location && allStat.char.data[location as LocationCharacterKey].weaponType !== weaponType) return undefined
+    if (location && allStats.char.data[location as LocationCharacterKey].weaponType !== weaponType) return undefined
     lock = !!lock
     return { key, level, rarity, ascension, refinement, location, lock }
   }

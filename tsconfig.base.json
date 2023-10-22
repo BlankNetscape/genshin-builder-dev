@@ -32,6 +32,7 @@
       "@genshin-builder/database": ["libs/database/src/index.ts"],
       "@genshin-builder/datamine": ["libs/datamine/src/index.ts"],
       "@genshin-builder/datamodel": ["libs/datamodel/src/index.ts"],
+      "@genshin-builder/genshin-utils": ["libs/genshin-utils/src/index.ts"],
       "@genshin-builder/stats": ["libs/stats/src/index.ts"],
       "@genshin-builder/utils": ["libs/utils/src/index.ts"]
     }

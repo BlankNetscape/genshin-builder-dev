@@ -1,0 +1,45 @@
+/* eslint-disable prefer-const */
+import { LocalStorage } from "@genshin-builder/database"
+import { GenshinBuilderDatabase } from './Database'
+import { initialCharacter, randomizeArtifact } from '@genshin-builder/genshin-utils'
+import { defaultInitialWeapon } from "../Util/WeaponUtil"
+
+const storage = new LocalStorage(localStorage)
+let database = new GenshinBuilderDatabase(storage)
+
+describe('Database test', () => {
+  beforeEach(() => {
+    // storage.clear()
+    // database = new GenshinBuilderDatabase(storage)
+  })
+
+  test('test001', ()=>{
+    const amber = initialCharacter('Amber')
+    console.log(amber)
+
+    const amberWeapon = defaultInitialWeapon('bow')
+    console.log(amberWeapon)
+
+    const art1 = randomizeArtifact({ slotKey: 'circlet' })
+    const art2 = randomizeArtifact({ slotKey: 'flower' })
+    console.log(art1)
+    console.log(art2)
+
+    amberWeapon.location = 'Amber'
+    art1.location = 'Amber'
+    art2.location = 'Amber'
+
+    console.log(amberWeapon)
+
+    database.characters.set(amber.key, amber)
+    database.characters.set('Albedo', amber)
+    console.log(database.characters.data)
+    console.log(database.storage.entries)
+    
+    // const amberWeaponid = database.weapons.new(amberWeapon)
+
+    // database.weapons.set(amberWeaponid, {location: ''})
+    // const foo = database.weapons.getCacheValue(amberWeaponid)
+    // console.log(foo)
+  })
+})

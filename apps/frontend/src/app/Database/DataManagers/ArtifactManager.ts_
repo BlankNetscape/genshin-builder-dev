@@ -1,7 +1,8 @@
-import { ArtifactSetKey, CharacterKey, SubStatKey, charKeyToLocationCharKey } from '@genshin-builder/consts'
+import { ArtifactSetKey, CharacterKey, SubStatKey, artSubStatRollData, charKeyToLocationCharKey } from '@genshin-builder/consts'
 import { IArtifact, ICachedArtifact, ICachedSubStat } from '@genshin-builder/datamodel'
 import { GenshinBuilderDatabase, IGOOD, ImportResult } from '../Database'
 import { DataManager } from '../DataManager'
+import { getMainStatDisplayValue, getSubStatRolls, getSubStatValue } from '@genshin-builder/genshin-utils'
 
 // [ ] TODO: FIX ERRORS
 
@@ -263,7 +264,7 @@ export function cachedArtifact(
     Math.min(Math.max(0, flex.level), rarity >= 3 ? rarity * 4 : 4)
   )
   
-  const mainStatVal = getMainStatDisplayValue(mainStat, rarity, level)
+  const mainStatVal = getMainStatDisplayValue(mainStat.key, rarity, level)
 
   const errors: string[] = []
   const subStats: ICachedSubStat[] = flex.subStats.map((substat) => ({
@@ -290,7 +291,7 @@ export function cachedArtifact(
   let totalUnambiguousRolls = 0
 
   function efficiency(value: number, key: SubStatKey): number {
-    return (value / getSubstatValue(key)) * 100
+    return (value / getSubStatValue(key)) * 100
   }
 
   subStats.forEach((substat, index): void => {
@@ -301,7 +302,7 @@ export function cachedArtifact(
     }
     substat.efficiency = efficiency(value, key)
 
-    const possibleRolls = getSubstatRolls(key, value, rarity)
+    const possibleRolls = getSubStatRolls(key, value, rarity)
 
     if (possibleRolls.length) {
       // Valid Substat
@@ -332,7 +333,7 @@ export function cachedArtifact(
 
   if (errors.length) return { artifact: validated, errors }
 
-  const { low, high } = artSubstatRollData[rarity],
+  const { low, high } = artSubStatRollData[rarity],
     lowerBound = low + Math.floor(level / 4),
     upperBound = high + Math.floor(level / 4)
 

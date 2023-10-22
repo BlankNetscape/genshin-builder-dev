@@ -14,6 +14,7 @@ export function initCharacter(key: CharacterKey): ICachedCharacter {
       burst: 0
     },
     equippedArtifacts: objKeyMap(artifactSlotKeys, () => ''),
-    equippedWeapon: ''
+    equippedWeapon: '',
+    infusionAura: 'anemo'
   }
 }

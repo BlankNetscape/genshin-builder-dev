@@ -1,0 +1,83 @@
+import { DataManagerBase, Database, DatabaseStorage, StorageSlot } from '@genshin-builder/database'
+import { IArtifact, ICharacter, IWeapon } from '@genshin-builder/datamodel'
+import { CharacterDataManager } from './DataManagers/CharacterManager'
+import { WeaponsDataManager } from './DataManagers/WeponManager'
+
+export type ImportResult = {
+  type: 'GOOD'
+  source: string
+  artifacts: ImportResultCounter<IArtifact>
+  weapons: ImportResultCounter<IWeapon>
+  characters: ImportResultCounter<ICharacter>
+  keepNotInImport: boolean
+  ignoreDups: boolean
+}
+
+type ImportResultCounter<T> = {
+  import: number // total # in filte
+  new: T[]
+  update: T[] // Use new object
+  unchanged: T[] // Use new onject
+  upgraded: T[]
+  remove: T[]
+  invalid: T[]
+  notInImport: number
+  beforeMerge: number
+}
+
+function newImportResult(source: string, keepNotInImport: boolean, ignoreDups: boolean): ImportResult {
+  return {
+    type: 'GOOD',
+    source,
+    artifacts: newCounter(),
+    weapons: newCounter(),
+    characters: newCounter(),
+    keepNotInImport,
+    ignoreDups,
+  }
+}
+
+function newCounter<T>(): ImportResultCounter<T> {
+  return {
+    import: 0,
+    invalid: [],
+    new: [],
+    update: [],
+    unchanged: [],
+    upgraded: [],
+    remove: [],
+    notInImport: 0,
+    beforeMerge: 0,
+  }
+}
+
+export type IGOOD = {
+  format: 'GOOD'
+  source: string
+  version: 1
+  characters?: ICharacter[]
+  artifacts?: IArtifact[]
+  weapons?: IWeapon[]
+}
+
+export type IGenshinBuilder = {
+  databaseVersion: number
+  source: 'Genshin Builder'
+  [appKey: string]: unknown
+}
+
+export class GenshinBuilderDatabase extends Database {
+  characters: CharacterDataManager
+  weapons: WeaponsDataManager
+
+  constructor(storage: DatabaseStorage) {
+    super(storage)
+
+    // Handle DataManagers
+    this.characters = new CharacterDataManager(this)
+    this.weapons = new WeaponsDataManager(this)
+    // this.artifact = ArtifactDataManager(this)
+
+
+  }
+}

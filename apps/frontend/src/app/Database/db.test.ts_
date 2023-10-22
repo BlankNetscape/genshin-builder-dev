@@ -1,0 +1,37 @@
+import { LocalStorage } from '@genshin-builder/database'
+import { GenshinBuilderDatabase } from './Database'
+import { initialCharacter, randomizeArtifact } from '@genshin-builder/genshin-utils'
+import { log } from 'console'
+import { charKeyToLocationCharKey } from '@genshin-builder/consts'
+
+const storage = new LocalStorage(localStorage)
+const database = new GenshinBuilderDatabase(storage)
+
+describe('Some Database tests', () => {
+  test('should do some tests lol', () => {
+    database.storage.clear()
+
+    const amber = initialCharacter('Amber')
+    const alhaitham = initialCharacter('Alhaitham')
+
+    database.characters.set(amber.key, amber)
+    database.characters.set(alhaitham.key, alhaitham)
+
+    const art1 = randomizeArtifact({ slotKey: 'circlet' })
+    art1.location = charKeyToLocationCharKey(amber.key)
+  })
+
+  test('should 2', () => {
+    const kaveh = initialCharacter('Kaveh')
+
+    database.characters.set(kaveh.key, kaveh)
+  })
+
+  test('should 3', () => {
+    console.log(database.storage.entries)
+  })
+
+  test('should 4', () => {
+    console.log(database.characters.getCacheValue('Amber'))
+  })
+})

@@ -20,7 +20,13 @@ export function strPadLeft(string: string, pad: string, length: number) {
  * @returns {number} The Hamming distance representing the mismatch count.
  */
 export function hammingDistance(str1: string, str2: string) {
+  // Ensure both strings have the same length by padding the shorter string with spaces
+  const maxLength = Math.max(str1.length, str2.length);
+  str1 = str1.padEnd(maxLength, ' ');
+  str2 = str2.padEnd(maxLength, ' ');
+  
   let dist = 0;
+
   str1 = str1.toLowerCase();
   str2 = str2.toLowerCase();
   for (let i = 0, j = Math.max(str1.length, str2.length); i < j; i++) {

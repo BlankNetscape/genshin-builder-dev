@@ -4,4 +4,4 @@ export * from './lib/object'
 export * from './lib/queue'
 export * from './lib/random'
 export * from './lib/string'
-
+export * from './lib/unit'

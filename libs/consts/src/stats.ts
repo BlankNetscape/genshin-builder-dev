@@ -19,7 +19,7 @@ export const mainStatKeys = [
   'heal_',
 ] as const
 
-export const substatKeys = [
+export const subStatKeys = [
   'hp',
   'hp_',
   'atk',
@@ -33,7 +33,7 @@ export const substatKeys = [
 ] as const
 
 export type MainStatKey = (typeof mainStatKeys)[number]
-export type SubStatKey = (typeof substatKeys)[number]
+export type SubStatKey = (typeof subStatKeys)[number]
 export type StatKey = MainStatKey | SubStatKey
 
 // [ ] TODO: Re check stats
